@@ -6,14 +6,26 @@ node {
     }
     stage("Clone a repo"){
         git 'https://github.com/aliyaaloca/Flaskex.git'
-    }
-    stage("Copy files"){
-        sh "scp -r *   ec2-user@${IP}:/tmp/"
-    }
-    stage("Install requirements"){
-        sh "ssh    ec2-user@${IP}      sudo pip install -r /tmp/requirements.txt"
-    }
+     }
     stage("Run App"){
-        sh "ssh    ec2-user@${IP}  python /tmp/app.py"
+        sh "ssh    ec2-user@${IP}  sudo mkdir /flaskex 2> /dev/null"
+    }    
+
+    stage("Copy files"){
+        sh "scp -r *   ec2-user@${IP}:/home/ec2-user/"
     }
-}
+    stage("Move files to /flaskex") {
+        sh "ssh    ec2-user@${IP}  sudo mv /home/ec2-user/* /flaskex/"
+    }
+
+    stage("Install requirements") {
+        sh "ssh    ec2-user@${IP}   sudo pip install -r /flaskex/requirements.txt"
+    }
+
+    stage("move service to /etc/"){
+        sh "ssh    ec2-user@${IP}      sudo /flaskex/flaskex.service /etc/systemd/system"
+    }
+
+    stage("Start sevice") {
+        sh "ssh    ec2-user@${IP}  sudo systemctl start flaskex"
+    }
